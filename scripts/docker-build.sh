@@ -1,0 +1,1 @@
+docker build -t positronic/lerobot --file docker/lerobot-gpu/Dockerfile .

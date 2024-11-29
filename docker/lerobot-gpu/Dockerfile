@@ -7,24 +7,32 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 # Install apt dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential cmake \
+    build-essential curl cmake \
     libglib2.0-0 libgl1-mesa-glx libegl1-mesa ffmpeg \
     speech-dispatcher \
     python${PYTHON_VERSION}-dev python${PYTHON_VERSION}-venv \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
+# Install poetry
+RUN curl -sSL https://install.python-poetry.org | python3 -
+ENV PATH="${PATH}:/root/.local/bin"
 
-# Create virtual environment
-RUN ln -s /usr/bin/python${PYTHON_VERSION} /usr/bin/python
-RUN python -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
-RUN echo "source /opt/venv/bin/activate" >> /root/.bashrc
+# Set python symlink
+RUN ln -s /usr/bin/python3 /usr/bin/python
 
-# Install LeRobot
-COPY . /lerobot
+# Install dependencies
+COPY poetry.lock pyproject.toml /lerobot/
+
 WORKDIR /lerobot
-RUN pip install --upgrade --no-cache-dir pip
-RUN pip install --no-cache-dir ".[test, aloha, xarm, pusht, dynamixel]"
+
+RUN poetry config virtualenvs.create false
+RUN poetry install --no-root --no-interaction --no-ansi
 
 # Set EGL as the rendering backend for MuJoCo
 ENV MUJOCO_GL="egl"
+
+# Set the data directory for lerobot
+ENV DATA_DIR="/data"
+ENV PYTHONPATH="/lerobot"
+
+# assume that user will mount the data directory to /data and the current directory to /lerobot
