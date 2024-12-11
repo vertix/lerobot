@@ -20,7 +20,7 @@ override_dataset_stats:
 training:
   offline_steps: 200000
   online_steps: 0
-  eval_freq: 25000
+  eval_freq: -1
   save_freq: 25000
   save_checkpoint: true
 
@@ -82,7 +82,7 @@ policy:
   crop_is_random: True
   pretrained_backbone_weights: null
   use_group_norm: True
-  
+
   spatial_softmax_num_keypoints: 32
   # Unet.
   down_dims: [512, 1024, 2048]
