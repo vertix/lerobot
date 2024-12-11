@@ -59,8 +59,8 @@ policy:
   input_shapes:
     # TODO(rcadene, alexander-soare): add variables for height and width from the dataset/env?
     # observation.images.arm: [3, 376, 1344]
-    observation.images.left: [3, 376, 672]
-    observation.images.right: [3, 376, 672]
+    observation.images.left: [3, 192, 352]
+    observation.images.right: [3, 192, 352]
     observation.state: ["${env.state_dim}"]
   output_shapes:
     action: ["${env.action_dim}"]
@@ -76,12 +76,13 @@ policy:
   # Architecture / modeling.
   # Vision backbone.
   vision_backbone: resnet18
-  pretrained_backbone_weights: ResNet18_Weights.IMAGENET1K_V1
+  # pretrained_backbone_weights: ResNet18_Weights.IMAGENET1K_V1
   replace_final_stride_with_dilation: false
-  # crop_shape: [84, 84]
-  # crop_is_random: True
-  # pretrained_backbone_weights: null
-  # use_group_norm: True
+  crop_shape: [128, 256]
+  crop_is_random: True
+  pretrained_backbone_weights: null
+  use_group_norm: True
+  
   spatial_softmax_num_keypoints: 32
   # Unet.
   down_dims: [512, 1024, 2048]
