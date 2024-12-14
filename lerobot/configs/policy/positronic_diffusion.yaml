@@ -7,16 +7,6 @@
 seed: 100000
 dataset_repo_id: lerobot/pusht
 
-override_dataset_stats:
-  observation.images.left:
-    # stats from imagenet, since we use a pretrained vision model
-    mean: [[[0.485]], [[0.456]], [[0.406]]]  # (c,1,1)
-    std: [[[0.229]], [[0.224]], [[0.225]]]  # (c,1,1)
-  observation.images.right:
-    # stats from imagenet, since we use a pretrained vision model
-    mean: [[[0.485]], [[0.456]], [[0.406]]]  # (c,1,1)
-    std: [[[0.229]], [[0.224]], [[0.225]]]  # (c,1,1)
-
 training:
   offline_steps: 200000
   online_steps: 0
@@ -82,10 +72,11 @@ policy:
   crop_is_random: True
   pretrained_backbone_weights: null
   use_group_norm: True
+  use_separate_rgb_encoder_per_camera: true
 
   spatial_softmax_num_keypoints: 32
   # Unet.
-  down_dims: [512, 1024, 2048]
+  down_dims: [256, 512, 1024]
   kernel_size: 5
   n_groups: 8
   diffusion_step_embed_dim: 128
