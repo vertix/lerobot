@@ -1,7 +1,11 @@
-
 function ask_and_stop() {
-    # Shutdown in 30 seconds if not cancelled
-    read -t 30 -p "Shutdown in 30 seconds. Press Ctrl+C to cancel. "
+    echo "Shutdown in 30 seconds. Press Ctrl+C to cancel."
+    # Start sleep in background
+    sleep 30 &
+    sleep_pid=$!
+    # Wait for sleep to finish
+    wait $sleep_pid
+    # If sleep completed (wasn't interrupted), run stop script
     if [ $? -eq 0 ]; then
         ./scripts/stop.sh
     fi
