@@ -38,7 +38,7 @@ from lerobot.common.policies.act.configuration_act import ACTConfig
 from lerobot.common.policies.normalize import Normalize, Unnormalize
 
 
-def rot6d_to_rotmat(x):
+def _rot6d_to_rotmat(x):
     """Convert 6D rotation representation to 3x3 rotation matrix.
     Based on Zhou et al., "On the Continuity of Rotation Representations in Neural Networks", CVPR 2019
     Input:
@@ -54,6 +54,27 @@ def rot6d_to_rotmat(x):
     b3 = torch.cross(b1, b2, dim=1)
     return torch.stack((b1, b2, b3), dim=-1)
 
+def rot6d_to_rotmat(x):
+    """Convert 6D rotation representation to 3x3 rotation matrix.
+    Based on Zhou et al., "On the Continuity of Rotation Representations in Neural Networks", CVPR 2019
+    Input:
+        (B,N,6) Batch of sequences of 6-D rotation representations
+    Output:
+        (B,N,3,3) Batch of sequences of corresponding rotation matrices
+    """
+    x = x.reshape(-1, x.shape[1], 3, 2)  # (B,N,3,2)
+    a1 = x[..., 0]  # (B,N,3)
+    a2 = x[..., 1]  # (B,N,3)
+    
+    b1 = F.normalize(a1, dim=-1)  # (B,N,3)
+    
+    # Computing dot product along last dimension and broadcasting
+    dot_prod = torch.sum(b1 * a2, dim=-1, keepdim=True)  # (B,N,1)
+    b2 = F.normalize(a2 - dot_prod * b1, dim=-1)  # (B,N,3)
+    
+    b3 = torch.cross(b1, b2, dim=-1)  # (B,N,3)
+    
+    return torch.stack((b1, b2, b3), dim=-1)  # (B,N,3,3)
 
 class ACTPolicy(
     nn.Module,
@@ -157,7 +178,8 @@ class ACTPolicy(
         batch = self.normalize_targets(batch)
         actions_hat, (mu_hat, log_sigma_x2_hat) = self.model(batch)
         rotmat = rot6d_to_rotmat(actions_hat[:, :, :6])
-        actions_hat = torch.cat([rotmat, actions_hat[:, :, 6:]], dim=-1)
+        rotmat = rotmat.reshape(rotmat.shape[0], -1, 9)
+        actions_hat = torch.cat([rotmat, actions_hat[:, :, 6:10]], dim=-1)
 
         l1_loss = (
             F.l1_loss(batch["action"], actions_hat, reduction="none") * ~batch["action_is_pad"].unsqueeze(-1)

@@ -35,7 +35,7 @@ def create_stats_buffers(
     stats_buffers = {}
 
     for key, mode in modes.items():
-        assert mode in ["mean_std", "min_max"]
+        assert mode in ["mean_std", "min_max", "identity"]
 
         shape = tuple(shapes[key])
 
