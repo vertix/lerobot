@@ -38,6 +38,23 @@ from lerobot.common.policies.act.configuration_act import ACTConfig
 from lerobot.common.policies.normalize import Normalize, Unnormalize
 
 
+def rot6d_to_rotmat(x):
+    """Convert 6D rotation representation to 3x3 rotation matrix.
+    Based on Zhou et al., "On the Continuity of Rotation Representations in Neural Networks", CVPR 2019
+    Input:
+        (B,6) Batch of 6-D rotation representations
+    Output:
+        (B,3,3) Batch of corresponding rotation matrices
+    """
+    x = x.reshape(-1, 3, 2)
+    a1 = x[:, :, 0]
+    a2 = x[:, :, 1]
+    b1 = F.normalize(a1)
+    b2 = F.normalize(a2 - torch.einsum('bi,bi->b', b1, a2).unsqueeze(-1) * b1)
+    b3 = torch.cross(b1, b2, dim=1)
+    return torch.stack((b1, b2, b3), dim=-1)
+
+
 class ACTPolicy(
     nn.Module,
     PyTorchModelHubMixin,
@@ -139,6 +156,8 @@ class ACTPolicy(
             batch["observation.images"] = torch.stack([batch[k] for k in self.expected_image_keys], dim=-4)
         batch = self.normalize_targets(batch)
         actions_hat, (mu_hat, log_sigma_x2_hat) = self.model(batch)
+        rotmat = rot6d_to_rotmat(actions_hat[:, :, :6])
+        actions_hat = torch.cat([rotmat, actions_hat[:, :, 6:]], dim=-1)
 
         l1_loss = (
             F.l1_loss(batch["action"], actions_hat, reduction="none") * ~batch["action_is_pad"].unsqueeze(-1)

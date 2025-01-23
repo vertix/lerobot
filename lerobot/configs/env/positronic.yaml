@@ -1,10 +1,10 @@
 # @package _global_
 
-fps: 15
+fps: 30
 
 env:
   name: positronic
   task: null
-  state_dim: 27
-  action_dim: 8
+  state_dim: 8
+  action_dim: 13 # xyz + rotmat + grip
   fps: ${fps}
