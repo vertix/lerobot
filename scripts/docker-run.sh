@@ -7,9 +7,15 @@ function ask_and_stop() {
     wait $sleep_pid
     # If sleep completed (wasn't interrupted), run stop script
     if [ $? -eq 0 ]; then
-        ./scripts/stop.sh
+        /usr/local/bin/stop_server
     fi
 }
+
+# check if /usr/local/bin/stop_server exists
+if [ ! -f /usr/local/bin/stop_server ]; then
+    echo "stop_server not found. Run 'source scripts/setup.sh' first."
+    exit 1
+fi
 
 trap ask_and_stop EXIT SIGTERM
 
