@@ -3,9 +3,15 @@ function ask_and_stop() {
     # Shutdown in 30 seconds if not cancelled
     read -t 30 -p "Shutdown in 30 seconds. Press Ctrl+C to cancel. "
     if [ $? -eq 0 ]; then
-        ./scripts/stop.sh
+        /usr/local/bin/stop_server
     fi
 }
+
+# check if /usr/local/bin/stop_server exists
+if [ ! -f /usr/local/bin/stop_server ]; then
+    echo "stop_server not found. Run setup.sh first."
+    exit 1
+fi
 
 trap ask_and_stop EXIT SIGTERM
 

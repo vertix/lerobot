@@ -1,6 +1,8 @@
 #!/bin/env bash
 set -ex
 
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
 curl -sSL https://storage.eu-north1.nebius.cloud/cli/install.sh | bash
 
 source $HOME/.bashrc
@@ -26,3 +28,17 @@ nebius profile create \
     --private-key-file $PRIVATE_KEY_PATH \
     --profile $SA_PROFILE_NAME \
     --parent-id $NB_PROJECT_ID
+
+
+sudo cp $SCRIPT_DIR/idle/is_idle.sh /usr/local/bin/is_idle
+sudo cp $SCRIPT_DIR/idle/shutown_if_idle.sh /usr/local/bin/shutown_if_idle
+sudo cp $SCRIPT_DIR/stop.sh /usr/local/bin/stop_server
+
+# remove system_idle_since file at startup
+(crontab -l 2>/dev/null; echo "@reboot rm -f $HOME/.cache/system_idle_since") | crontab -
+
+# add is_idle.sh to crontab every 30 minutes
+(crontab -l 2>/dev/null; echo "*/30 * * * * /usr/local/bin/is_idle") | crontab -
+
+# add shutown_if_idle.sh to crontab every 1 minute
+(crontab -l 2>/dev/null; echo "*/1 * * * * /usr/local/bin/shutown_if_idle") | crontab -
