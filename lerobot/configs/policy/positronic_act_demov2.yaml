@@ -95,3 +95,5 @@ policy:
   # Training and loss computation.
   dropout: 0.1
   kl_weight: 10.0
+
+  rot6d_rotation: true
