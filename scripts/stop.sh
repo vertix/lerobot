@@ -1,2 +1,2 @@
 # Stop the current instance
-nebius compute instance stop --id $(hostname)
+$HOME/.nebius/bin/nebius compute instance stop --id $(hostname)

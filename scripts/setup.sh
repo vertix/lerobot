@@ -18,7 +18,7 @@ export PRIVATE_KEY_PATH="$HOME/.nebius_private_key.pem"
 
 if [ ! -f $PRIVATE_KEY_PATH ]; then
     echo "Private key file not found at $PRIVATE_KEY_PATH; Copy your private key to this file."
-    exit 1
+    return 1
 fi
 
 nebius profile create \
@@ -33,6 +33,10 @@ nebius profile create \
 sudo cp $SCRIPT_DIR/idle/is_idle.sh /usr/local/bin/is_idle
 sudo cp $SCRIPT_DIR/idle/shutown_if_idle.sh /usr/local/bin/shutown_if_idle
 sudo cp $SCRIPT_DIR/stop.sh /usr/local/bin/stop_server
+
+# allow current user to use crontab
+sudo bash -c "echo \"$USER\" >> /etc/cron.allow"
+sudo chmod 666 /etc/cron.allow
 
 # remove system_idle_since file at startup
 (crontab -l 2>/dev/null; echo "@reboot rm -f $HOME/.cache/system_idle_since") | crontab -

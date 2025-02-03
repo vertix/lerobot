@@ -7,7 +7,7 @@ is_idle() {
         GPU_USAGE=0
     fi
 
-    CPU_IDLE=$(mpstat | grep all | tr -s ' ' | cut -d ' ' -f 13)
+    CPU_IDLE=$(top -bn1 | grep "Cpu(s)" | sed "s/.*, *\([0-9.]*\)%* id.*/\1/")
     CPU_IDLE_INT=${CPU_IDLE%.*}
 
     if [ $GPU_USAGE -lt 10 ] && [ $CPU_IDLE_INT -gt 90 ]; then

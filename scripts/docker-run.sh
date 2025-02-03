@@ -9,7 +9,7 @@ function ask_and_stop() {
 
 # check if /usr/local/bin/stop_server exists
 if [ ! -f /usr/local/bin/stop_server ]; then
-    echo "stop_server not found. Run setup.sh first."
+    echo "stop_server not found. Run 'source scripts/setup.sh' first."
     exit 1
 fi
 
