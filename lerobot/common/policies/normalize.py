@@ -35,7 +35,7 @@ def create_stats_buffers(
     stats_buffers = {}
 
     for key, mode in modes.items():
-        assert mode in ["mean_std", "min_max"]
+        assert mode in ["mean_std", "min_max", "identity"]
 
         shape = tuple(shapes[key])
 
@@ -151,6 +151,8 @@ class Normalize(nn.Module):
                 batch[key] = (batch[key] - min) / (max - min + 1e-8)
                 # normalize to [-1, 1]
                 batch[key] = batch[key] * 2 - 1
+            elif mode == "identity":
+                pass
             else:
                 raise ValueError(mode)
         return batch
@@ -215,6 +217,8 @@ class Unnormalize(nn.Module):
                 assert not torch.isinf(max).any(), _no_stats_error_str("max")
                 batch[key] = (batch[key] + 1) / 2
                 batch[key] = batch[key] * (max - min) + min
+            elif mode == "identity":
+                pass
             else:
                 raise ValueError(mode)
         return batch

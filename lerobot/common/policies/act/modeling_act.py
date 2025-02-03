@@ -38,6 +38,68 @@ from lerobot.common.policies.act.configuration_act import ACTConfig
 from lerobot.common.policies.normalize import Normalize, Unnormalize
 
 
+class Rot6dActionHead(nn.Module):
+    def __init__(self, config: ACTConfig):
+        super().__init__()
+        # since 9 elements of rotation matrix are represented as 6D rotation, we need 3 elements less in the action head
+        rest_features = config.output_shapes["action"][0] - 9
+        self.rotation_head = nn.Linear(config.dim_model, 6)
+        self.rest_action_head = nn.Linear(config.dim_model, rest_features)
+
+    def forward(self, x: Tensor) -> Tensor:
+        rest_features = self.rest_action_head(x)
+        # convert 6D rotation to rotation matrix
+        rot6d = self.rotation_head(x)
+        rotmat = self.rot6d_to_rotmat_sequence(rot6d)
+        rotmat = rotmat.reshape(rotmat.shape[0], -1, 9)
+
+        # concatenate rotation matrix with the rest of the action
+        features = torch.cat([rotmat, rest_features], dim=-1)
+
+        return features
+
+    def rot6d_to_rotmat(x: torch.Tensor) -> torch.Tensor:
+        """
+        Convert 6D rotation representation to 3x3 rotation matrix.
+        Based on Zhou et al., "On the Continuity of Rotation Representations in Neural Networks", CVPR 2019
+
+        Args:
+            x: (B,6) Batch of 6-D rotation representations
+        Returns:
+            (B,3,3) Batch of corresponding rotation matrices
+        """
+        x = x.reshape(-1, 3, 2)
+        a1 = x[:, :, 0]
+        a2 = x[:, :, 1]
+        b1 = F.normalize(a1)
+        b2 = F.normalize(a2 - torch.einsum('bi,bi->b', b1, a2).unsqueeze(-1) * b1)
+        b3 = torch.cross(b1, b2, dim=1)
+        return torch.stack((b1, b2, b3), dim=-1)
+
+
+    def rot6d_to_rotmat_sequence(x: torch.Tensor) -> torch.Tensor:
+        """
+        Same as rot6d_to_rotmat, but for a sequence of 6D rotations.
+
+        Args:
+            x: (B,N,6) Batch of sequences of 6-D rotation representations
+        Returns:
+            (B,N,3,3) Batch of sequences of corresponding rotation matrices
+        """
+        x = x.reshape(-1, x.shape[1], 3, 2)  # (B,N,3,2)
+        a1 = x[..., 0]  # (B,N,3)
+        a2 = x[..., 1]  # (B,N,3)
+
+        b1 = F.normalize(a1, dim=-1)  # (B,N,3)
+
+        dot_prod = torch.sum(b1 * a2, dim=-1, keepdim=True)  # (B,N,1)
+        b2 = F.normalize(a2 - dot_prod * b1, dim=-1)  # (B,N,3)
+
+        b3 = torch.cross(b1, b2, dim=-1)  # (B,N,3)
+
+        return torch.stack((b1, b2, b3), dim=-1)  # (B,N,3,3)
+
+
 class ACTPolicy(
     nn.Module,
     PyTorchModelHubMixin,
@@ -365,7 +427,10 @@ class ACT(nn.Module):
         self.decoder_pos_embed = nn.Embedding(config.chunk_size, config.dim_model)
 
         # Final action regression head on the output of the transformer's decoder.
-        self.action_head = nn.Linear(config.dim_model, config.output_shapes["action"][0])
+        if config.rot6d_rotation:
+            self.action_head = Rot6dActionHead(config)
+        else:
+            self.action_head = nn.Linear(config.dim_model, config.output_shapes["action"][0])
 
         self._reset_parameters()
 
