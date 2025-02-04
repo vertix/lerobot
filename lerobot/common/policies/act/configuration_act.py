@@ -144,6 +144,9 @@ class ACTConfig:
     dropout: float = 0.1
     kl_weight: float = 10.0
 
+    # if true - the first 9 elements of the action will be a rotation matrix
+    rot6d_rotation: bool = False
+
     def __post_init__(self):
         """Input validation (not exhaustive)."""
         if not self.vision_backbone.startswith("resnet"):
