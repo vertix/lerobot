@@ -67,7 +67,8 @@ policy:
 
   # Normalization / Unnormalization
   input_normalization_modes:
-    observation.images.rgb: mean_std
+    observation.images.front: mean_std
+    observation.images.back: mean_std
     observation.state: min_max
   output_normalization_modes:
     action: identity
