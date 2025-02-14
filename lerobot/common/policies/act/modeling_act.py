@@ -58,6 +58,7 @@ class Rot6dActionHead(nn.Module):
 
         return features
 
+    @staticmethod
     def rot6d_to_rotmat(x: torch.Tensor) -> torch.Tensor:
         """
         Convert 6D rotation representation to 3x3 rotation matrix.
@@ -76,7 +77,7 @@ class Rot6dActionHead(nn.Module):
         b3 = torch.cross(b1, b2, dim=1)
         return torch.stack((b1, b2, b3), dim=-1)
 
-
+    @staticmethod
     def rot6d_to_rotmat_sequence(x: torch.Tensor) -> torch.Tensor:
         """
         Same as rot6d_to_rotmat, but for a sequence of 6D rotations.
