@@ -3,6 +3,8 @@ import torch
 from lerobot.common.datasets.lerobot_dataset import LeRobotDataset
 
 
+eps = 1e-16
+
 def compose_rotvecs(rotvec1: torch.Tensor, rotvec2: torch.Tensor) -> torch.Tensor:
     """
     Compose two rotation vectors (applies rotvec2 after rotvec1).
@@ -19,8 +21,8 @@ def compose_rotvecs(rotvec1: torch.Tensor, rotvec2: torch.Tensor) -> torch.Tenso
     theta2 = torch.norm(rotvec2, dim=-1, keepdim=True)
 
     # Normalize rotation vectors (handle zero case)
-    w1 = rotvec1 / (theta1 + 1e-8)
-    w2 = rotvec2 / (theta2 + 1e-8)
+    w1 = rotvec1 / (theta1 + eps)
+    w2 = rotvec2 / (theta2 + eps)
 
     # Cross product of normalized vectors
     w1_cross_w2 = torch.cross(w1, w2, dim=-1)
@@ -38,14 +40,14 @@ def compose_rotvecs(rotvec1: torch.Tensor, rotvec2: torch.Tensor) -> torch.Tenso
     B = c1*s2*w2 + c2*s1*w1 + s1*s2*w1_cross_w2
 
     theta = 2 * torch.atan2(torch.norm(B, dim=-1, keepdim=True), A)
-    w = B / (torch.norm(B, dim=-1, keepdim=True) + 1e-8)
+    w = B / (torch.norm(B, dim=-1, keepdim=True) + eps)
 
     result = theta * w
 
     # Handle special cases
     small_angle = (theta1 < 1e-4) & (theta2 < 1e-4)
-    if small_angle.any():
-        result[small_angle] = rotvec1[small_angle] + rotvec2[small_angle]
+    small_angle = small_angle.expand_as(rotvec1)
+    result = torch.where(small_angle, rotvec1 + rotvec2, result)
 
     return result
 
@@ -75,7 +77,7 @@ def apply_rotvec_to_point(rotvec: torch.Tensor, point: torch.Tensor) -> torch.Te
         Rotated point of shape (..., 3)
     """
     theta = torch.norm(rotvec, dim=-1, keepdim=True)
-    w = rotvec / (theta + 1e-8)
+    w = rotvec / (theta + eps)
 
     cos_theta = torch.cos(theta)
     sin_theta = torch.sin(theta)
@@ -86,7 +88,6 @@ def apply_rotvec_to_point(rotvec: torch.Tensor, point: torch.Tensor) -> torch.Te
             (1 - cos_theta) * (torch.sum(w * point, dim=-1, keepdim=True) * w))
 
 
-@torch.compile
 def delta_position_to_relative(action: torch.Tensor) -> torch.Tensor:
     """
     Convert a sequence of delta positions to positions relative to the first position.
@@ -139,6 +140,7 @@ def delta_position_to_relative(action: torch.Tensor) -> torch.Tensor:
 class RelativePositionDataset(torch.utils.data.Dataset):
     def __init__(self, base_dataset: LeRobotDataset):
         self.base_dataset = base_dataset
+        self.fn = delta_position_to_relative
 
     def __len__(self):
         return len(self.base_dataset)
@@ -146,7 +148,7 @@ class RelativePositionDataset(torch.utils.data.Dataset):
     def __getitem__(self, idx):
         item = self.base_dataset[idx]
 
-        item['action'] = delta_position_to_relative(item['action'])
+        item['action'] = self.fn(item['action'])
         return item
 
     @property
