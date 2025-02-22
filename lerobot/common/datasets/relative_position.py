@@ -86,6 +86,7 @@ def apply_rotvec_to_point(rotvec: torch.Tensor, point: torch.Tensor) -> torch.Te
             (1 - cos_theta) * (torch.sum(w * point, dim=-1, keepdim=True) * w))
 
 
+@torch.compile
 def delta_position_to_relative(action: torch.Tensor) -> torch.Tensor:
     """
     Convert a sequence of delta positions to positions relative to the first position.
