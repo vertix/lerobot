@@ -15,6 +15,7 @@
 # limitations under the License.
 import logging
 
+from lerobot.common.datasets.relative_position import RelativePositionDataset
 import torch
 from omegaconf import ListConfig, OmegaConf
 
@@ -113,5 +114,8 @@ def make_dataset(cfg, split: str = "train") -> LeRobotDataset | MultiLeRobotData
                 # example of stats_type: min, max, mean, std
                 stats = OmegaConf.to_container(listconfig, resolve=True)
                 dataset.stats[key][stats_type] = torch.tensor(stats, dtype=torch.float32)
+
+    if cfg.get("use_relative_position"):
+        dataset = RelativePositionDataset(dataset)
 
     return dataset
