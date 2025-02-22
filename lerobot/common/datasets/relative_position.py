@@ -197,3 +197,11 @@ class RelativePositionDataset(torch.utils.data.Dataset):
         is provided or when loading video frames from mp4 files.
         """
         return self.base_dataset.tolerance_s
+
+    @property
+    def info(self):
+        return self.base_dataset.info
+
+    @property
+    def stats(self):
+        return self.base_dataset.stats
