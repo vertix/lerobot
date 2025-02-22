@@ -162,7 +162,7 @@ class RelativePositionDataset(torch.utils.data.Dataset):
         return self.base_dataset.video
 
     @property
-    def features(self) -> datasets.Features:
+    def features(self):
         return self.base_dataset.features
 
     @property
