@@ -148,3 +148,52 @@ class RelativePositionDataset(torch.utils.data.Dataset):
 
         item['action'] = delta_position_to_relative(item['action'])
         return item
+
+    @property
+    def fps(self) -> int:
+        """Frames per second used during data collection."""
+        return self.base_dataset.fps
+
+    @property
+    def video(self) -> bool:
+        """Returns True if this dataset loads video frames from mp4 files.
+        Returns False if it only loads images from png files.
+        """
+        return self.base_dataset.video
+
+    @property
+    def features(self) -> datasets.Features:
+        return self.base_dataset.features
+
+    @property
+    def camera_keys(self) -> list[str]:
+        """Keys to access image and video stream from cameras."""
+        return self.base_dataset.camera_keys
+
+    @property
+    def video_frame_keys(self) -> list[str]:
+        """Keys to access video frames that requires to be decoded into images.
+
+        Note: It is empty if the dataset contains images only,
+        or equal to `self.cameras` if the dataset contains videos only,
+        or can even be a subset of `self.cameras` in a case of a mixed image/video dataset.
+        """
+        return self.base_dataset.video_frame_keys
+
+    @property
+    def num_samples(self) -> int:
+        """Number of samples/frames."""
+        return self.base_dataset.num_samples
+
+    @property
+    def num_episodes(self) -> int:
+        """Number of episodes."""
+        return self.base_dataset.num_episodes
+
+    @property
+    def tolerance_s(self) -> float:
+        """Tolerance in seconds used to discard loaded frames when their timestamps
+        are not close enough from the requested frames. It is only used when `delta_timestamps`
+        is provided or when loading video frames from mp4 files.
+        """
+        return self.base_dataset.tolerance_s
