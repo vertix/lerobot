@@ -1,6 +1,6 @@
 FROM nvidia/cuda:12.4.1-base-ubuntu22.04
 
-# Configure image
+# Configure environment variables
 ARG PYTHON_VERSION=3.10
 ARG DEBIAN_FRONTEND=noninteractive
 
