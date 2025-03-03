@@ -58,6 +58,7 @@ class Rot6dActionHead(nn.Module):
 
         return features
 
+    @staticmethod
     def rot6d_to_rotmat(x: torch.Tensor) -> torch.Tensor:
         """
         Convert 6D rotation representation to 3x3 rotation matrix.
@@ -76,7 +77,7 @@ class Rot6dActionHead(nn.Module):
         b3 = torch.cross(b1, b2, dim=1)
         return torch.stack((b1, b2, b3), dim=-1)
 
-
+    @staticmethod
     def rot6d_to_rotmat_sequence(x: torch.Tensor) -> torch.Tensor:
         """
         Same as rot6d_to_rotmat, but for a sequence of 6D rotations.
@@ -192,6 +193,9 @@ class ACTPolicy(
             # effectively has shape (n_action_steps, batch_size, *), hence the transpose.
             self._action_queue.extend(actions.transpose(0, 1))
         return self._action_queue.popleft()
+
+    def chunk_start(self):
+        return len(self._action_queue) == 0
 
     def forward(self, batch: dict[str, Tensor]) -> dict[str, Tensor]:
         """Run the batch through the model and compute the loss for training or validation."""
