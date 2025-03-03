@@ -194,6 +194,9 @@ class ACTPolicy(
             self._action_queue.extend(actions.transpose(0, 1))
         return self._action_queue.popleft()
 
+    def chunk_start(self):
+        return len(self._action_queue) == 0
+
     def forward(self, batch: dict[str, Tensor]) -> dict[str, Tensor]:
         """Run the batch through the model and compute the loss for training or validation."""
         batch = self.normalize_inputs(batch)
