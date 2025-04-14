@@ -16,6 +16,7 @@
 import logging
 from pprint import pformat
 
+from lerobot.common.datasets.relative_position import RelativePositionDataset
 import torch
 
 from lerobot.common.datasets.lerobot_dataset import (
@@ -114,5 +115,8 @@ def make_dataset(cfg: TrainPipelineConfig) -> LeRobotDataset | MultiLeRobotDatas
         for key in dataset.meta.camera_keys:
             for stats_type, stats in IMAGENET_STATS.items():
                 dataset.meta.stats[key][stats_type] = torch.tensor(stats, dtype=torch.float32)
+
+    if cfg.get("use_relative_position"):
+        dataset = RelativePositionDataset(dataset)
 
     return dataset
